@@ -9,18 +9,45 @@ mapboxgl.accessToken = 'pk.eyJ1IjoiYWRhbXZvc2J1cmdoIiwiYSI6ImNrOGE5MDhudzAzcHozb
 var map = new mapboxgl.Map({
     container: 'map',
     style: 'mapbox://styles/mapbox/light-v9',
-    center: [-73.93324, 40.80877],
-    zoom: 14
+    center: [ -73.94829, 40.80781],
+    zoom: 13.75
 });
 
-var trees_url = "./data/nyc_harlemriverstreettrees.geojson"
-var buildings_url = "./data/nyc_harlemriverbldgs.geojson"
+var blocks_url = "./data/blocks_joined_trees_um.geojson"
+var trees_url = "./data/2015_Street_Tree_Census_subset_um.geojson"
 
 map.on('load',function(){
-    // define a 'source' for your point dataset
+  // define a 'source' for your polygons dataset
+  map.addSource('blocks_data',{
+    'type':'geojson',
+    'data': blocks_url,
+  });
+  // add a new layer with your polygons
+  map.addLayer({
+    'id':'blocks',
+    'type':'fill',
+    'source':'blocks_data',
+    'paint':{
+        'fill-color': 
+          ['case', 
+          ['==', ['get', 'avg_diamet'], null],
+          'white',
+          ['step', ['get', 'avg_diamet'],
+            '#ffffff',
+            2.615, '#edf8e9',
+            6.444, '#bae4b3',
+            9.379, '#74c476',
+            15.036, '#31a354',
+            26.000, '#006d2c'
+          ]],
+      'fill-outline-color':'#000000',
+      'fill-opacity': 0.5
+    }
+  })
+  // define a 'source' for your point dataset
     map.addSource('trees_data',{
       'type':'geojson',
-      'data': "./data/nyc_harlemriverstreettrees.geojson"
+      'data': trees_url
     });
     // add a new layer with your points
     map.addLayer({
@@ -28,27 +55,12 @@ map.on('load',function(){
       'type':'circle',
       'source':'trees_data',
       'paint':{
-        'circle-radius':4,
         'circle-color': '#349f27',
-        'circle-opacity':0.7
+        'circle-opacity':0.7,
+        'circle-radius': ['/', ['get', 'tree_dbh'], 5],
       },
     })
-    // define a 'source' for your polygons dataset
-    map.addSource('buildings',{
-        'type':'geojson',
-        'data': buildings_url,
-      });
-      // add a new layer with your polygons
-      map.addLayer({
-        'id':'buildings',
-        'type':'fill',
-        'source':'buildings',
-        'paint':{
-          'fill-color':'#888888',
-          'fill-outline-color':'#000000'
-        }
-      })
-      // ommitted map warper raster tiles - it appears that the project is deprecated
+    
   });
   
   // when the user does a 'click' on an element in the 'trees' layer...
